@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todos_list/darktheme.dart';
 import 'package:todos_list/todospage.dart';
+import 'package:todos_list/calender.dart';
 
 void onSaveTodo(String title, String description, String startDate,
     String endDate, String category, BuildContext context) {
@@ -22,11 +23,14 @@ class _MainPageState extends State<MainPage> {
   final List<Todo> _originalTodos = [];
   List<Todo> _filteredTodos = [];
   String? _value;
+
   final List<Stuff> _stuff = [
     Stuff('Work', Colors.red),
     Stuff('Routine', Colors.amber),
     Stuff('Others', Colors.blue)
   ];
+
+  final title = ["Todos", "Calendar", "Profile"];
 
   void addTodo(String title, String description, String startDate,
       String endDate, String category) {
@@ -58,13 +62,7 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
-  int _selectedButtomIndex = 0;
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedButtomIndex = index;
-    });
-  }
+  int _selectedBottomIndex = 0;
 
   Widget _counter(int num) {
     return Container(
@@ -83,12 +81,28 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  int doneNumber(String item) {
+  int undoneNumber(String item) {
     List<Todo> filtered;
     filtered = _originalTodos
         .where((tile) => tile.category.contains(item) && tile.isChecked != true)
         .toList();
     return filtered.length.toInt();
+  }
+
+  int doneNumber(String item) {
+    List<Todo> filtered;
+    filtered = _originalTodos
+        .where((tile) => tile.category.contains(item) && tile.isChecked == true)
+        .toList();
+    return filtered.length.toInt();
+  }
+
+  final PageController _pageController = PageController(initialPage: 0);
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -100,7 +114,7 @@ class _MainPageState extends State<MainPage> {
         _filteredTodos.where((check) => !check.isChecked).toList();
     return Scaffold(
         appBar: AppBar(
-          title: Text(widget.title),
+          title: Text(title[_selectedBottomIndex]),
           centerTitle: true,
           actions: <Widget>[
             Icon(themeProvider.darkTheme == false
@@ -115,172 +129,219 @@ class _MainPageState extends State<MainPage> {
                 })
           ],
         ),
-        body: Column(
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Wrap(
-                spacing: 5.0,
-                children: List<Widget>.generate(
-                  _stuff.length,
-                  (int index) {
-                    return ChoiceChip(
-                      label: Text(_stuff[index].label),
-                      selectedColor: _stuff[index].color,
-                      backgroundColor: Colors.white70,
-                      side: BorderSide(color: _stuff[index].color, width: 2),
-                      selected: _value == _stuff[index].label,
-                      onSelected: (bool value) {
-                        setState(() {
-                          _value = value ? _stuff[index].label : null;
-                        });
+        body: PageView(
+          controller: _pageController,
+          onPageChanged: (index) {
+            setState(() {
+              _selectedBottomIndex = index;
+            });
+          },
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Wrap(
+                    spacing: 5.0,
+                    children: List<Widget>.generate(
+                      _stuff.length,
+                      (int index) {
+                        return ChoiceChip(
+                          label: Text(_stuff[index].label),
+                          selectedColor: _stuff[index].color,
+                          backgroundColor: Colors.white70,
+                          side:
+                              BorderSide(color: _stuff[index].color, width: 2),
+                          selected: _value == _stuff[index].label,
+                          onSelected: (bool value) {
+                            setState(() {
+                              _value = value ? _stuff[index].label : null;
+                            });
 
-                        if (value) {
-                          _selectedChip(_stuff[index].label);
-                        } else {
-                          _selectedChip(null);
-                        }
+                            if (value) {
+                              _selectedChip(_stuff[index].label);
+                            } else {
+                              _selectedChip(null);
+                            }
+                          },
+                        );
                       },
-                    );
-                  },
+                    ),
+                  ),
                 ),
-              ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(8, 5, 8, 0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text('Unfinished'),
+                              Divider(),
+                            ],
+                          ),
+                        ),
+                        if (unfinishedTodos.isNotEmpty)
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: unfinishedTodos.length,
+                            itemBuilder: (context, index) {
+                              final todo = unfinishedTodos[index];
+                              return Card(
+                                color: Colors.white70,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10)),
+                                child: ExpansionTile(
+                                  leading: Checkbox(
+                                    value: todo.isChecked,
+                                    activeColor: _stuff
+                                        .firstWhere((element) =>
+                                            element.label == todo.category)
+                                        .color,
+                                    side: BorderSide(
+                                        color: _stuff
+                                            .firstWhere((element) =>
+                                                element.label == todo.category)
+                                            .color,
+                                        width: 2),
+                                    onChanged: (bool? value) {
+                                      setState(() {
+                                        todo.isChecked = value ?? false;
+                                      });
+                                    },
+                                  ),
+                                  title: Text(
+                                    todo.title,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 20),
+                                  ),
+                                  subtitle: Text(
+                                    '${todo.startDate} s/d ${todo.endDate}',
+                                  ),
+                                  trailing: const Icon(Icons.arrow_drop_down),
+                                  children: <Widget>[
+                                    ListTile(
+                                        title: Text(
+                                      todo.description,
+                                    )),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(8, 5, 8, 0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'Finished',
+                              ),
+                              Divider(),
+                            ],
+                          ),
+                        ),
+                        if (finishedTodos.isNotEmpty)
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: finishedTodos.length,
+                            itemBuilder: (context, index) {
+                              final todo = finishedTodos[index];
+                              return Card(
+                                color: Colors.white70,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10)),
+                                child: ExpansionTile(
+                                  leading: Checkbox(
+                                    value: todo.isChecked,
+                                    activeColor: _stuff
+                                        .firstWhere((element) =>
+                                            element.label == todo.category)
+                                        .color,
+                                    side: BorderSide(
+                                        color: _stuff
+                                            .firstWhere((element) =>
+                                                element.label == todo.category)
+                                            .color,
+                                        width: 2),
+                                    onChanged: (bool? value) {
+                                      setState(() {
+                                        todo.isChecked = value ?? false;
+                                      });
+                                    },
+                                  ),
+                                  title: Text(
+                                    todo.title,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 20),
+                                  ),
+                                  subtitle: Text(
+                                    '${todo.startDate} s/d ${todo.endDate}',
+                                  ),
+                                  trailing: const Icon(Icons.arrow_drop_down),
+                                  children: <Widget>[
+                                    ListTile(
+                                        title: Text(
+                                      todo.description,
+                                    )),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 5, 8, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            'Unfinished',
-                            style: TextStyle(color: Colors.black),
-                          ),
-                          Divider(
-                            color: Colors.black87,
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (unfinishedTodos.isNotEmpty)
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: unfinishedTodos.length,
-                        itemBuilder: (context, index) {
-                          final todo = unfinishedTodos[index];
-                          return Card(
-                            color: Colors.white70,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                            child: ExpansionTile(
-                              leading: Checkbox(
-                                value: todo.isChecked,
-                                activeColor: _stuff
-                                    .firstWhere((element) =>
-                                        element.label == todo.category)
-                                    .color,
-                                side: BorderSide(
-                                    color: _stuff
-                                        .firstWhere((element) =>
-                                            element.label == todo.category)
-                                        .color,
-                                    width: 2),
-                                onChanged: (bool? value) {
-                                  setState(() {
-                                    todo.isChecked = value ?? false;
-                                  });
-                                },
-                              ),
-                              title: Text(
-                                todo.title,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 20),
-                              ),
-                              subtitle: Text(
-                                '${todo.startDate} s/d ${todo.endDate}',
-                              ),
-                              trailing: const Icon(Icons.arrow_drop_down),
-                              children: <Widget>[
-                                ListTile(
-                                    title: Text(
-                                  todo.description,
-                                )),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 5, 8, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            'Finished',
-                            style: TextStyle(color: Colors.black),
-                          ),
-                          Divider(
-                            color: Colors.black87,
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (finishedTodos.isNotEmpty)
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: finishedTodos.length,
-                        itemBuilder: (context, index) {
-                          final todo = finishedTodos[index];
-                          return Card(
-                            color: Colors.white70,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                            child: ExpansionTile(
-                              leading: Checkbox(
-                                value: todo.isChecked,
-                                activeColor: _stuff
-                                    .firstWhere((element) =>
-                                        element.label == todo.category)
-                                    .color,
-                                side: BorderSide(
-                                    color: _stuff
-                                        .firstWhere((element) =>
-                                            element.label == todo.category)
-                                        .color,
-                                    width: 2),
-                                onChanged: (bool? value) {
-                                  setState(() {
-                                    todo.isChecked = value ?? false;
-                                  });
-                                },
-                              ),
-                              title: Text(
-                                todo.title,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 20),
-                              ),
-                              subtitle: Text(
-                                '${todo.startDate} s/d ${todo.endDate}',
-                              ),
-                              trailing: const Icon(Icons.arrow_drop_down),
-                              children: <Widget>[
-                                ListTile(
-                                    title: Text(
-                                  todo.description,
-                                )),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                  ],
+            CalendarPage(),
+            Column(
+              children: [
+                Card(
+                  child: ListTile(
+                    leading: const CircleAvatar(backgroundColor: Colors.black),
+                    title: const Text("Alvyn Stane"),
+                    subtitle: Text('Task finished: ${finishedTodos.length}'),
+                  ),
                 ),
-              ),
+                Container(
+                  width: MediaQuery.of(context).size.width,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      for (final stuff in _stuff)
+                        Card(
+                          child: SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.316,
+                            height: 150,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Text('${stuff.label}',
+                                    style: const TextStyle(fontSize: 15)),
+                                Text(
+                                  '${doneNumber(stuff.label)}',
+                                  style: TextStyle(
+                                      color: stuff.color, fontSize: 35),
+                                ),
+                                const Text('Finished',
+                                    style: TextStyle(fontSize: 15)),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -300,9 +361,18 @@ class _MainPageState extends State<MainPage> {
                 icon: Icon(Icons.calendar_month_outlined), label: 'Calender'),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
-          currentIndex: _selectedButtomIndex,
-          selectedItemColor: Colors.yellow,
-          onTap: _onItemTapped,
+          currentIndex: _selectedBottomIndex,
+          selectedItemColor: Colors.green,
+          onTap: (int index) {
+            setState(() {
+              _selectedBottomIndex = index;
+              _pageController.animateToPage(
+                index,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
+            });
+          },
         ),
         drawer: Drawer(
           child: ListView(
@@ -312,7 +382,7 @@ class _MainPageState extends State<MainPage> {
                   padding: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
                       color: themeProvider.darkTheme == false
-                          ? Colors.yellow
+                          ? Colors.green
                           : Colors.grey),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -330,18 +400,18 @@ class _MainPageState extends State<MainPage> {
               ListTile(
                   title: const Text('Work'),
                   trailing: Visibility(
-                      visible: doneNumber('Work') != 0,
-                      child: _counter(doneNumber('Work')))),
+                      visible: undoneNumber('Work') != 0,
+                      child: _counter(undoneNumber('Work')))),
               ListTile(
                   title: const Text('Routine'),
                   trailing: Visibility(
-                      visible: doneNumber('Routine') != 0,
-                      child: _counter(doneNumber('Routine')))),
+                      visible: undoneNumber('Routine') != 0,
+                      child: _counter(undoneNumber('Routine')))),
               ListTile(
                   title: const Text('Others'),
                   trailing: Visibility(
-                      visible: doneNumber('Others') != 0,
-                      child: _counter(doneNumber('Others')))),
+                      visible: undoneNumber('Others') != 0,
+                      child: _counter(undoneNumber('Others')))),
               const Divider(),
               ListTile(
                 title: const Text('Dark Mode'),
