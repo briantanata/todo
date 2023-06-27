@@ -112,6 +112,9 @@ class _MainPageState extends State<MainPage> {
         _filteredTodos.where((check) => check.isChecked).toList();
     List<Todo> unfinishedTodos =
         _filteredTodos.where((check) => !check.isChecked).toList();
+    int sliderValue = finishedTodos.length;
+    int maxSliderValue = _originalTodos.length;
+    int unfinished = unfinishedTodos.length;
     return Scaffold(
         appBar: AppBar(
           title: Text(title[_selectedBottomIndex]),
@@ -307,8 +310,8 @@ class _MainPageState extends State<MainPage> {
               children: [
                 Card(
                   child: ListTile(
-                    leading: const CircleAvatar(backgroundColor: Colors.black),
-                    title: const Text("Alvyn Stane"),
+                    leading: const CircleAvatar(backgroundColor: Colors.grey),
+                    title: const Text("Bete"),
                     subtitle: Text('Task finished: ${finishedTodos.length}'),
                   ),
                 ),
@@ -341,6 +344,39 @@ class _MainPageState extends State<MainPage> {
                     ],
                   ),
                 ),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      children: [
+                        SliderTheme(
+                          data: const SliderThemeData(
+                            thumbShape:
+                                RoundSliderThumbShape(disabledThumbRadius: 0),
+                            overlayShape:
+                                RoundSliderOverlayShape(overlayRadius: 0),
+                            disabledActiveTrackColor: Colors.yellow,
+                            disabledInactiveTrackColor: Colors.grey,
+                          ),
+                          child: Slider(
+                              min: 0,
+                              max: maxSliderValue.toDouble(),
+                              value: sliderValue.toDouble(),
+                              onChanged: null),
+                        ),
+                        SizedBox(
+                          height: 12,
+                        ),
+                        Text(
+                          unfinished == 0
+                              ? 'All tasks done'
+                              : 'You still have $unfinished task(s) to do',
+                          style: TextStyle(fontSize: 15),
+                        )
+                      ],
+                    ),
+                  ),
+                )
               ],
             ),
           ],
@@ -362,7 +398,7 @@ class _MainPageState extends State<MainPage> {
             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
           currentIndex: _selectedBottomIndex,
-          selectedItemColor: Colors.green,
+          selectedItemColor: Colors.yellow,
           onTap: (int index) {
             setState(() {
               _selectedBottomIndex = index;
@@ -382,7 +418,7 @@ class _MainPageState extends State<MainPage> {
                   padding: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
                       color: themeProvider.darkTheme == false
-                          ? Colors.green
+                          ? Colors.yellow
                           : Colors.grey),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -394,7 +430,7 @@ class _MainPageState extends State<MainPage> {
                       SizedBox(
                         height: 10,
                       ),
-                      Text('By: Anonymous')
+                      Text('By: BrianTanata')
                     ],
                   )),
               ListTile(
