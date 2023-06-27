@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todos_list/darktheme.dart';
@@ -71,13 +70,14 @@ class _MainPageState extends State<MainPage> {
     return Container(
       width: 20,
       height: 20,
-      padding: EdgeInsets.all(1),
+      padding: const EdgeInsets.all(1),
       decoration: BoxDecoration(
           color: Colors.red, borderRadius: BorderRadius.circular(10)),
       child: Center(
         child: Text(
           num.toString(),
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          style:
+              const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
       ),
     );
@@ -205,7 +205,7 @@ class _MainPageState extends State<MainPage> {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
         currentIndex: _selectedButtomIndex,
-        selectedItemColor: Colors.green,
+        selectedItemColor: Colors.yellow,
         onTap: _onItemTapped,
       ),
       drawer: Drawer(
@@ -213,7 +213,7 @@ class _MainPageState extends State<MainPage> {
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-                padding: EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(16.0),
                 decoration: BoxDecoration(
                     color: themeProvider.darkTheme == false
                         ? Colors.yellow
@@ -232,23 +232,23 @@ class _MainPageState extends State<MainPage> {
                   ],
                 )),
             ListTile(
-                title: Text('Work'),
+                title: const Text('Work'),
                 trailing: Visibility(
                     visible: doneNumber('Work') != 0,
                     child: _counter(doneNumber('Work')))),
             ListTile(
-                title: Text('Routine'),
+                title: const Text('Routine'),
                 trailing: Visibility(
                     visible: doneNumber('Routine') != 0,
                     child: _counter(doneNumber('Routine')))),
             ListTile(
-                title: Text('Others'),
+                title: const Text('Others'),
                 trailing: Visibility(
                     visible: doneNumber('Others') != 0,
                     child: _counter(doneNumber('Others')))),
-            Divider(),
+            const Divider(),
             ListTile(
-              title: Text('Dark Mode'),
+              title: const Text('Dark Mode'),
               trailing: Switch(
                   value: themeProvider.darkTheme,
                   onChanged: (value) {
